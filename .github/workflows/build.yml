@@ -1,0 +1,38 @@
+name: build
+on: push
+jobs:
+  build:
+    name: build
+    runs-on: windows-latest
+    steps:
+    - name: env
+      run: set
+    - name: telemetry off
+      run: 
+        echo "::set-env name=DOTNET_CLI_TELEMETRY_OPTOUT::true"
+    - run: dotnet msbuild -help
+    - run: dir "%ProgramFiles(x86)%\MSBuild\15.0\.Net\.NetNative"
+    - run: dir "%ProgramFiles(x86)%\Reference Assemblies\Microsoft\Framework\.NETFramework\v3.5\Profile\Client"
+    - run: powershell.exe /?
+    - name: download SlimDX
+      shell: pwsh
+      run: |
+        $TempDir = [System.IO.Path]::GetTempPath()
+        cd $TempDir
+        Invoke-WebRequest "https://storage.googleapis.com/google-code-archive-downloads/v2/code.google.com/slimdx/SlimDX%20SDK%20(January%202012).msi" -OutFile SlimDX.msi
+    - name: install slimdx
+      run: |
+        dir "%temp%"
+        start /wait msiexec /q /i "%temp%\SlimDX.msi"
+    - name: checkout
+      uses: actions/checkout@v1
+    - name: msbuild help
+      run: |
+        call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x86
+        msbuild /?
+    - name: build
+      run: |
+        call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x86
+        cd %GITHUB_WORKSPACE%
+        dir
+        msbuild -detailedSummary -restore TJAPlayer3.sln
